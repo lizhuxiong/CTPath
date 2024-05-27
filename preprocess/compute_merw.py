@@ -3,7 +3,6 @@ import scipy.sparse.linalg as alg
 import scipy.linalg as algnorm
 import scipy.sparse as smat
 import random
-# Operacje grafowe - może wydzielić ?
 import tqdm
 
 
@@ -13,7 +12,7 @@ def to_adiacency_row(neighbours, n):
     return row
 
 
-def graph_to_matrix(graph):  # Tworzy macierz rzadką opisująca graf
+def graph_to_matrix(graph):
     n = len(graph)
     rows = []
     cols = []
@@ -54,7 +53,7 @@ def __dfs(graph, v, visited):
             __dfs(graph, w, visited)
 
 
-def extract_connected_component(graph, vertex):  # Być może zbędna funkcja
+def extract_connected_component(graph, vertex):
     n = len(graph)
     member = [0 for v in graph]
     member[vertex] = 1
@@ -104,7 +103,7 @@ def get_all_components(graph):
                 v[i] = number[v[i]]
     return components
 
-# Obliczanie MERW i SimRanków
+# Obliczanie MERW i
 
 
 def compute_merw(A): # Archaiczne liczenie MERW
@@ -163,12 +162,12 @@ def compute_merw_matrix(A, method=power_method):
     evector, evalue, iter = method(A)
     print('({} itr.)'.format(iter), end='')
     mat1 = smat.diags([evector], [0], shape=(n, n), format='csc')
-    mat2 = smat.diags([[_inv(v, evalue) for v in evector]],  # Coś jakby odwrotność macierzy diagonalnej
+    mat2 = smat.diags([[_inv(v, evalue) for v in evector]],
                       [0], shape=(n, n), format='csc')
     return mat2*A*mat1, evector, evalue, [v*v for v in evector]
 
 
-def compute_grw(A):  # Wyznacza rozkład prawdopodobieństwa i rozkład stacjonarny dla zwykłego błądzenia
+def compute_grw(A):
     n = A.get_shape()[0]
     degrees = smat.diags(A.sum(axis=0), [0], shape=(n, n), format='csr').power(-1)
     P = degrees * A
@@ -186,11 +185,9 @@ def compute_merw_simrank(graph, alpha, precision=1e-5, maxiter=100):
     denom = [[v[x] * v[y] for x in range(n)] for y in range(n)]
     alpha = alpha / val / val
     for iteration in range(maxiter):
-        # S.fill(0)  # S = num.zeros((n, n))
         for y in range(n):
             S[y, y] = 1.0
             for x in range(y):
-                # if denom[x][y] != 0:   # To mmoże nie zachodzić, jeśli graf nie jest spójny
                 S[x, y] = 0.0
                 for a in graph[x]:
                     for b in graph[y]:
@@ -238,8 +235,7 @@ def compute_merw_simrank_ofmatrix(matrix, alpha, precision=1e-5, maxiter=20, met
         for y in range(n):
             S[y, y] = 1.0
             for x in range(y):
-                if denom[x][y] != 0:   # To mmoże nie zachodzić, jeśli graf nie jest spójny
-                    S[x, y] = 0.0
+                if denom[x][y] != 0:
                     for a in graph[x]:
                         for b in graph[y]:
                             S[x, y] += R[a, b] / denom[a][b]
@@ -251,7 +247,7 @@ def compute_merw_simrank_ofmatrix(matrix, alpha, precision=1e-5, maxiter=20, met
     return R, algnorm.norm(R - S)
 
 
-def compute_P_distance_iterative(P, alpha=0.8, maxiter=100, precision=1e-6):  # Archaiczna i niedokładna
+def compute_P_distance_iterative(P, alpha=0.8, maxiter=100, precision=1e-6):
     if alpha <=0 or alpha>1:
         raise ValueError()
     D = powr = P*alpha

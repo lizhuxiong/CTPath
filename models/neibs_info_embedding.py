@@ -35,14 +35,14 @@ class Path(MessagePassing):
             return (normal((num_inputs, num_hiddens)),
                     torch.zeros(num_hiddens, device=device))
 
-        W_xi, b_i = three()  # 输入门参数
-        W_xf, b_f = three()  # 遗忘门参数
-        W_xo, b_o = three()  # 输出门参数
-        W_xc, b_c = three()  # 候选记忆元参数
-        # 输出层参数
+        W_xi, b_i = three()
+        W_xf, b_f = three()
+        W_xo, b_o = three()
+        W_xc, b_c = three()
+        # output parameters
         W_hq = normal((num_hiddens, num_outputs))
         b_q = torch.zeros(num_outputs, device=device)
-        # 附加梯度
+
         params = [W_xi, b_i, W_xf, b_f, W_xo, b_o, W_xc, b_c, W_hq, b_q]
         for param in params:
             param.requires_grad_(True)
@@ -55,16 +55,6 @@ class Path(MessagePassing):
 
     def lstm_time_entropy(self, params, In, TR, H=None, C=None):
         [W_xi, b_i, W_xf, b_f, W_xo, b_o, W_xc, b_c, W_hq, b_q] = params
-        # (H, C, TR) = state  # C可以初始化为Time entropy, 第一个隐藏层H初始化为I
-        # outputs = []
-        # for X in inputs:
-        # I = torch.sigmoid((I @ W_xi) + (I * TR) + b_i)
-        # F = torch.sigmoid((I @ W_xf) + (I * TR) + b_f)
-        # O = torch.sigmoid((I @ W_xo) + (I * TR) + b_o)
-        # C_tilda = torch.tanh((I @ W_xc) + (I * TR) + b_c)
-        # C = F * C_tilda + I * C_tilda
-        # H = O * torch.tanh(C)
-        # Y = (H @ W_hq) + b_q
 
         I = torch.sigmoid((In @ W_xi) + (In * TR))
         F = torch.sigmoid((In @ W_xf) + (In * TR))
@@ -74,16 +64,6 @@ class Path(MessagePassing):
         H = O * torch.tanh(C)
         Y = (H @ W_hq) + b_q
 
-        # I = torch.sigmoid(In * TR @ W_xi)
-        # F = torch.sigmoid(In * TR @ W_xf)
-        # O = torch.sigmoid(In * TR @ W_xo)
-        # C_tilda = torch.tanh(In * TR @ W_xc)
-        # C = F * C_tilda + I * C_tilda
-        # H = O * torch.tanh(C)
-        # Y = (H @ W_hq) + b_q
-
-        # outputs.append(Y)
-        # return torch.cat(outputs, dim=0), (H, C)
         return Y, (H, C)
 
     def forward(self, X, T, neis, num_w, walk_len, neis_time, path_weight):

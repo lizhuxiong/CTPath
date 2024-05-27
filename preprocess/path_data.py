@@ -7,23 +7,16 @@ def get_node_number(inPath, outputPath):
     np.save(outputPath+"y.npy", examples)
 
 def path_row_col(inPath, fileName, outputPath):
-    # # 读取文件
-    # data = np.genfromtxt(inPath+fileName)
-    # # 构建二维数组A
-    # A = np.array([data[:, 0], data[:, 2]])
-    # A = A.astype(int)
-    # # 存储 row & col for path
     examples = pickle.load(open(inPath+fileName, 'rb'))
     # A = np.array([examples[:, 0], examples[:, 2]])
-    A = np.array([examples[:, 0], examples[:, 2], examples[:, 3]]) #增加时间
+    A = np.array([examples[:, 0], examples[:, 2], examples[:, 3]])
     A = A.astype(int)
     np.save(outputPath+'edge_index.npy', A)
 
 # 验证
 def read_npy_file(readFile):
-    # 读取.npy文件
+    # read file.npy
     output_data = np.load(readFile)
-    # 打印读取的数据
     print(output_data)
 
 if __name__ == '__main__':

@@ -25,27 +25,27 @@ class Train(object):
         # print("------rel_size------: ", rel_size)
         self.his_direction = ['lhs', 'rhs']
         self.root = Path(DATA_PATH) / name
-        his_f = open(str(self.root / f'history.pickle'), 'rb')  # 读取正向与逆向历史事件
+        his_f = open(str(self.root / f'history.pickle'), 'rb')  #
         # self.history: Dict[str, Dict[Tuple[int, int, int], List[Tuple]]] = pickle.load(his_f)
         self.history: Dict[str, Dict[Tuple[int, int, int], List[List]]] = pickle.load(his_f)
         his_f.close()
 
     def epoch(self, examples: torch.LongTensor, args, mode, neis_all, neis_timestamps, path_weight, epoch):
-        actual_examples = examples[torch.randperm(examples.shape[0]), :]  # 随机打乱
+        actual_examples = examples[torch.randperm(examples.shape[0]), :]
         criterion = nn.CrossEntropyLoss(reduction='mean')
         with tqdm.tqdm(total=examples.shape[0], unit='ex', disable=not self.verbose) as bar:
             bar.set_description(f'train loss')
             b_begin = 0
             while b_begin < examples.shape[0]:
                 input_batch = actual_examples[b_begin:b_begin + self.batch_size].to('cuda' if self.is_cuda else 'cpu')
-                # 分支 if rel > rel_size
-                batch_his = []  # (batch_size , his不等长的[]列表)
+                #  if rel > rel_size
+                batch_his = []
                 batch_time = []  # (batch_size ,1)
                 for en1, rel, en2, time in input_batch:
-                    if rel.item() >= self.rel_size:  # 逆向预测
+                    if rel.item() >= self.rel_size:  # reverse prediction
                         his = self.history[self.his_direction[0]][
-                            (en1.item(), rel.item(), time.item())]  # en2这些仍是张量， en1已经对应逆向
-                    else:  # 正向预测
+                            (en1.item(), rel.item(), time.item())]
+                    else:
                         his = self.history[self.his_direction[1]][(en1.item(), rel.item(), time.item())]
                     if (len(his) == 0):
                         batch_his.append([])
@@ -55,16 +55,12 @@ class Train(object):
 
                 # batch_time = torch.tensor(batch_time).to(args.cuda)
                 predictions, contrastive_leanring_loss, time_ = self.model.forward(
-                    args, input_batch, batch_his, mode, neis_all, neis_timestamps, path_weight, epoch)  # 预测 batch
+                    args, input_batch, batch_his, mode, neis_all, neis_timestamps, path_weight, epoch)
                 l_time = self.learn_time(time_)
 
                 truth = input_batch[:, 2]
-                l_link_predic = criterion(predictions, truth)  # 预测损失
-                # loss = l_link_predic + 0.01 * contrastive_leanring_loss + 0.1 * l_time #good 56.01	44.83	63.64	76.02
-                loss = l_link_predic + 0.1 * contrastive_leanring_loss + 0.1 * l_time  # good  0.5704	0.4544	0.6503	0.7717
-                # loss = l_link_predic + 0.2 * contrastive_leanring_loss + 0.5 * l_time
-                # loss = l_link_predic + 0.1 * contrastive_leanring_loss + 0. * l_time
-                # loss = l_link_predic + l_time
+                l_link_predic = criterion(predictions, truth)
+                loss = l_link_predic + 0.1 * contrastive_leanring_loss + 0.1 * l_time
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
@@ -97,24 +93,23 @@ class Train(object):
 
 class Dataset(object):
     def __init__(self, name: str, is_cuda: bool = False):
-        self.root = Path(DATA_PATH) / name  # "/"操作符表示路径的连接
+        self.root = Path(DATA_PATH) / name
         self.is_cuda = is_cuda
         self.data = {}  # all data
         for f in ['train', 'test', 'valid']:
             in_file = open(str(self.root / (f + '.pickle')), 'rb')
             self.data[f] = pickle.load(in_file)
 
-        maxis = np.max(self.data['train'], axis=0)  # 二维数组，计算所有每列的最大值，得到[max_col1, max_col2, max_col3, max_col4]
+        maxis = np.max(self.data['train'], axis=0)
         maxis2 = np.max(self.data['test'], axis=0)
         maxis3 = np.max(self.data['valid'], axis=0)
-        # 计算最大值，是为了在models只给你用于对实体与关系nn.embedding(,)初始化
         self.n_entities = int(
             max(max(max(maxis[0], maxis[2]), max(maxis2[0], maxis2[2])), max(maxis3[0], maxis3[2])) + 1)
-        self.n_predicates = int(max(max(maxis[1], maxis2[1]), maxis3[1]) + 1)  # 最大的关系编号，是需要 +1 的
+        self.n_predicates = int(max(max(maxis[1], maxis2[1]), maxis3[1]) + 1)
         self.n_predicates *= 2
-        self.n_timestamps = int(max(max(maxis[3], maxis2[3]), maxis3[3]) + 1)  # 最大的时间编号
-        self.n_timestamps = int(max(max(maxis[3], maxis2[3]), maxis3[3]) + 1)  # 最大的时间编号
-        inp_f = open(str(self.root / f'to_skip.pickle'), 'rb')  # 读取正向与逆向history
+        self.n_timestamps = int(max(max(maxis[3], maxis2[3]), maxis3[3]) + 1)
+        self.n_timestamps = int(max(max(maxis[3], maxis2[3]), maxis3[3]) + 1)
+        inp_f = open(str(self.root / f'to_skip.pickle'), 'rb')
         self.to_skip: Dict[str, Dict[Tuple[int, int, int], List[int]]] = pickle.load(inp_f)
         inp_f.close()
 
@@ -126,8 +121,8 @@ class Dataset(object):
         tmp = np.copy(copy[:, 0])
         copy[:, 0] = copy[:, 2]
         copy[:, 2] = tmp
-        copy[:, 1] += self.n_predicates // 2  # has been multiplied by two.
-        origin_data = np.vstack((self.data['train'], copy))  # 列堆叠  ,（o,rel>=230,s,t）第一个已经是o了
+        copy[:, 1] += self.n_predicates // 2
+        origin_data = np.vstack((self.data['train'], copy))
         return origin_data
 
     def eval(self, model, split: str, args, mode, neis_all, neis_timestamps, path_weight, epoch):
@@ -145,8 +140,7 @@ class Dataset(object):
         for m in missing:
             q = examples.clone()
             ranks = torch.ones(len(q))
-            _his = []  # (batch_size , his不等长列表)
-            # _time = [] # (batch_size ,1)
+            _his = []
             if m == 'lhs':
                 tmp = torch.clone(q[:, 0])
                 q[:, 0] = q[:, 2]

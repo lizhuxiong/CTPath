@@ -29,77 +29,6 @@ parser.add_argument("--walk_len_neis", type=str, default=2)
 
 args = parser.parse_args()
 
-
-
-# def load_merw(args):
-#     name = args.dataset
-#     num_of_walks = args.num_walks
-#     walk_length = args.walk_len
-#     # num_walks_neis = args.num_walks_neis
-#     # walk_len_neis = args.walk_len_neis
-#
-#     walks = []  # walks = {list: n} [[0, 44, 397, 266], [0, 74, 66, 196], [0, 160, 137, 358]]
-#     # walks_2 = []
-#     path_distance = []  # path_type = {list: n} [[0, 1, 2, 2], [0, 1, 2, 2], [0, 1, 2, 2]]
-#     path_weight = []
-#     # walks_neis = []  # walks = {list: n} [[0, 44, 397, 266], [0, 74, 66, 196], [0, 160, 137, 358]]
-#     # # walks_2_neis = []
-#     # path_distance_neis = []
-#     paths_root = "../path_data/"
-#     if name in ['ICEWS14', 'ICEWS18', 'ICEWS05-15', "WIKI", "YAGO"]:
-#         path_file = paths_root + name + "/{}_{}_{}_merw.txt".format(
-#             name, num_of_walks, walk_length)
-#         # path_file_neis = paths_root + name + "/{}_{}_{}_merw.txt".format(
-#         #     name, num_walks_neis, walk_len_neis)
-#         try:
-#             with open(path_file, "r") as p:
-#                 for line in tqdm.tqdm(p):
-#                     info = list(map(float, line[1:-2].split(",")))
-#                     path = list(map(int, info[:walk_length]))
-#                     distance = list(map(int, info[walk_length:2*walk_length]))
-#                     # weight = list(map(int, info[walk_length:2*walk_length]))
-#                     walks.append(path)  # 获取path
-#                     # walks_2.append(info[1:3])
-#                     path_distance.append(distance)  # 获取这条path对应的distance距离
-#                     path_weight.append(info[2*walk_length:])
-#         except FileNotFoundError as fnf_error:
-#             print(
-#                 fnf_error, 'the file change the paths_root to where you put the sampled paths')
-#         print("Opening file of paths: " + path_file)
-#         print("The number of walks:", len(walks), " The number of distance:", len(path_distance))
-#         # try:
-#         #     with open(path_file_neis, "r") as p:
-#         #         for line in tqdm.tqdm(p):
-#         #             info = list(map(float, line[1:-2].split(",")))
-#         #             walks_neis.append(info[:walk_len_neis])  # 获取path
-#         #             path_distance_neis.append(info[walk_len_neis:])  # 获取这条path对应的distance距离
-#         # except FileNotFoundError as fnf_error:
-#         #     print(
-#         #         fnf_error, 'the file change the paths_root to where you put the sampled paths')
-#         # print("Opening file of paths: " + path_file_neis)
-#         # print("The number of walks:", len(walks_neis), " The number of distance:", len(path_distance_neis))
-#
-#     numpy_y = np.load(paths_root + name + '/y.npy')
-#     node_num = torch.from_numpy(numpy_y).to(torch.long)
-#
-#     # neis_path_2 = torch.tensor(walks_2, dtype=torch.long).view(
-#     #     node_num, -1).to(args.cuda)
-#     neis_path_all = torch.tensor(walks, dtype=torch.long).view(
-#         node_num, -1).to(args.cuda)
-#     # TODO args.node_num, args.num_w, args.walk_len要在args中添加进去
-#     path_distance = torch.tensor(path_distance, dtype=torch.long).view(
-#         node_num, num_of_walks, walk_length).to(args.cuda)
-#     path_weight = torch.tensor(path_weight).view(
-#         node_num, -1).to(args.cuda)
-#     # neis_path_all_neis = torch.tensor(walks_neis, dtype=torch.long).view(
-#     #     node_num, -1).to(args.cuda)
-#     # # TODO args.node_num, args.num_w, args.walk_len要在args中添加进去
-#     # path_distance_neis = torch.tensor(path_distance_neis, dtype=torch.long).view(
-#     #     node_num, num_walks_neis, walk_len_neis).to(args.cuda)
-#
-#
-#     return neis_path_all, path_distance, path_weight
-
 def load_merw(args):
     name = args.dataset
     num_of_walks = args.num_walks
@@ -117,12 +46,7 @@ def load_merw(args):
                     info = list(map(float, line[1:-2].split(",")))
                     path = list(map(int, info[:walk_length]))
                     timestamp = list(map(int, info[walk_length : 2*walk_length]))
-                    # walks.append(path)  # 获取path
-                    # path_weight.append(info[walk_length:])
-                    # walks.append(path[::-1])  # 获取path
-                    # timestamps.append(timestamp[::-1])
-                    # path_weight.append(info[2*walk_length:][::-1])
-                    walks.append(path)  # 获取path
+                    walks.append(path)
                     timestamps.append(timestamp)
                     path_weight.append(info[2*walk_length:])
         except FileNotFoundError as fnf_error:

@@ -25,7 +25,7 @@ def prepare_dataset(path, name):
 
     entities_to_id = {x: i for (i, x) in enumerate(sorted(entities))}
     relations_to_id = {x: i for (i, x) in enumerate(sorted(relations))}
-    timestamps_to_id = {x: i for (i, x) in enumerate(sorted(timestamps))} #排序了的
+    timestamps_to_id = {x: i for (i, x) in enumerate(sorted(timestamps))}
 
     print("{} entities, {} relations over {} timestamps".format(len(entities), len(relations), len(timestamps)))
     stat = []
@@ -53,12 +53,11 @@ def prepare_dataset(path, name):
         examples = []
         for line in to_read.readlines():
             lhs, rel, rhs, timestamp = line.strip().split('\t')
-            # lhs, rel, rhs, timestamp, _ = line.replace(' ', '').split('\t') #ICEWS18 、GDELT
             try:
                 examples.append([entities_to_id[lhs], relations_to_id[rel], entities_to_id[rhs], timestamps_to_id[timestamp]])
             except ValueError:
                 continue
-        examples = sorted(examples, key=lambda x: x[3]) #排序
+        examples = sorted(examples, key=lambda x: x[3])
 
         out = open(Path(DATA_PATH) / name / (f + '.pickle'), 'wb')
         pickle.dump(np.array(examples), out)
@@ -102,15 +101,9 @@ def prepare_dataset(path, name):
     # defaultdict(set) -> list，so that can use index
     en_rel = {'lhs': [], 'rhs': []}
     en_rel_synchr = {'lhs': [], 'rhs': []}
-    # en_time = {'lhs': [], 'rhs': []}
-    # for kk, skip in to_skip.items():
-    #     for k, v in skip.items():
-    #         (entity, rel, time) = k
-    #         en_rel[kk].append((entity, rel, time)) #存当前entity and relation 
-    #         en_time[kk].append(list(zip(v, [time]*len(v)))) #zip entity绑定时间
     for kk, skip in train_syncro.items():
         for k, v in skip.items():
-            en_rel[kk].append(k) #存当前entity and relation 
+            en_rel[kk].append(k) #current entity and relation
             en_rel_synchr[kk].append(v) #
 
     history_events = {'lhs': {}, 'rhs': {}}  # 'lhs': {[()]}
@@ -125,15 +118,13 @@ def prepare_dataset(path, name):
             if(time_cur == 0):
                 history_events[kk][(entity_cur, rel_cur, time_cur)] = []
             else:
-                # history_events[kk][(entity_c, rel_c, time_c)] = en_time[kk][i] #不能包含自己
-                for num, (entity_former, rel_former, time_former) in enumerate(en_rel[kk][i-1::-1]):  #前一个事件开始为历史，不能算自己与当前的同步事件,前面次第绑定en_time历史，当前只需绑定其前面最近一个的历史，即是绑定全部历史
-                    index_cur = i - 1 - num #当前索引
+                # history_events[kk][(entity_c, rel_c, time_c)] = en_time[kk][i]
+                for num, (entity_former, rel_former, time_former) in enumerate(en_rel[kk][i-1::-1]):
+                    index_cur = i - 1 - num
                     if(entity_cur == entity_former and rel_cur == rel_former):
                         if(time_cur != time_former):
-                            history_events[kk][(entity_cur, rel_cur, time_cur)] = en_rel_synchr[kk][index_cur] #1) first: 非同步事件
+                            history_events[kk][(entity_cur, rel_cur, time_cur)] = en_rel_synchr[kk][index_cur]
                             history_events[kk][(entity_cur, rel_cur, time_cur)].extend(history_events[kk][(entity_former, rel_former, time_former)]) #1) second: add in front of the previous(time-n-1) history
-                        # else: 不需要了
-                        #     history_events[kk][(entity_cur, rel_cur, time_cur)] = history_events[kk][(entity_former, rel_former, time_former)] #1) second: add in front of the previous(time-n-1) history
                         break
                     if(index_cur == 0):
                         history_events[kk][(entity_cur, rel_cur, time_cur)] = []

@@ -5,11 +5,9 @@ if __name__ == '__main__':
             output = file+"-1"
             infile = f"../data/{data_name}/{file}.txt"
             outfile = f"../data/{data_name}/{output}.txt"
-            # 打开文件A进行读取
             with open(infile, 'r') as file_a:
                 lines = file_a.readlines()
 
-            # 处理每一行数据
             result_lines = []
             for line in lines:
                 numbers = line.split()
@@ -17,7 +15,6 @@ if __name__ == '__main__':
                 third_num = int(numbers[2]) - 1
                 result_lines.append(f"{first_num} {numbers[1]} {third_num} {numbers[3]}")
 
-            # 将结果写入文件B
             with open(outfile, 'w') as file_b:
                 for result_line in result_lines:
                     file_b.write(result_line + '\n')
